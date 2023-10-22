@@ -17,8 +17,8 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [x86_64, arm64]
-        version: ["5.15.94.2", "5.15.104.1", "5.15.104.2", "5.15.104.3", "5.15.104.4"]
+        arch: [arm64]
+        version: ["5.15.104.4"]
 
     name: Build WSA-Kernel-${{ matrix.version }}-${{ matrix.arch }}
     runs-on: ubuntu-20.04
@@ -82,6 +82,8 @@ jobs:
           grep -q "kernelsu" $DRIVER_MAKEFILE || echo "obj-y += kernelsu/" >> $DRIVER_MAKEFILE
           echo "[+] Apply KernelSU patches"
           cd $KERNEL_ROOT && git apply $GITHUB_WORKSPACE/KernelSU/.github/patches/5.15/*.patch
+          echo "[+] Apply Arm64 WSA patches"
+          cd $KERNEL_ROOT && git apply $GITHUB_WORKSPACE/KernelSU/.github/patches/arm64-wsa-ksu.patch
           echo "[+] KernelSU setup done."
           cd $GITHUB_WORKSPACE/KernelSU
           VERSION=$(($(git rev-list --count HEAD) + 10200))
@@ -96,8 +98,8 @@ jobs:
             export KSU_EXPECTED_HASH=${{ vars.EXPECTED_HASH }}
           fi
           declare -A ARCH_MAP=(["x86_64"]="x64" ["arm64"]="arm64")
-          cp configs/wsa/config-wsa-${ARCH_MAP[${{ matrix.arch }}]} .config
-          make olddefconfig
+          cp $GITHUB_WORKSPACE/KernelSU/.github/patches/config .config
+          if [ "${{ matrix.arch }}" != "arm64" ]; then make olddefconfig; fi
           declare -A FILE_NAME=(["x86_64"]="bzImage" ["arm64"]="Image")
           make -j`nproc` LLVM=1 ARCH=${{ matrix.arch }} $(if [ "${{ matrix.arch }}" == "arm64" ]; then echo CROSS_COMPILE=aarch64-linux-gnu; fi) ${FILE_NAME[${{ matrix.arch }}]} CCACHE="/usr/bin/ccache"
           declare -A ARCH_MAP_FILE=(["x86_64"]="x86" ["arm64"]="arm64")

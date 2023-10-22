@@ -129,85 +129,85 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	return 0;
 }
 
-#ifdef CONFIG_KPROBES
+// #ifdef CONFIG_KPROBES
 
-static int faccessat_handler_pre(struct kprobe *p, struct pt_regs *regs)
-{
-	int *dfd = (int *)PT_REGS_PARM1(regs);
-	const char __user **filename_user = (const char **)&PT_REGS_PARM2(regs);
-	int *mode = (int *)&PT_REGS_PARM3(regs);
-	// Both sys_ and do_ is C function
-	int *flags = (int *)&PT_REGS_CCALL_PARM4(regs);
+// static int faccessat_handler_pre(struct kprobe *p, struct pt_regs *regs)
+// {
+// 	int *dfd = (int *)PT_REGS_PARM1(regs);
+// 	const char __user **filename_user = (const char **)&PT_REGS_PARM2(regs);
+// 	int *mode = (int *)&PT_REGS_PARM3(regs);
+// 	// Both sys_ and do_ is C function
+// 	int *flags = (int *)&PT_REGS_CCALL_PARM4(regs);
 
-	return ksu_handle_faccessat(dfd, filename_user, mode, flags);
-}
+// 	return ksu_handle_faccessat(dfd, filename_user, mode, flags);
+// }
 
-static int newfstatat_handler_pre(struct kprobe *p, struct pt_regs *regs)
-{
-	int *dfd = (int *)&PT_REGS_PARM1(regs);
-	const char __user **filename_user = (const char **)&PT_REGS_PARM2(regs);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-// static int vfs_statx(int dfd, const char __user *filename, int flags, struct kstat *stat, u32 request_mask)
-	int *flags = (int *)&PT_REGS_PARM3(regs);
-#else
-// int vfs_fstatat(int dfd, const char __user *filename, struct kstat *stat,int flag)
-	int *flags = (int *)&PT_REGS_CCALL_PARM4(regs);
-#endif
+// static int newfstatat_handler_pre(struct kprobe *p, struct pt_regs *regs)
+// {
+// 	int *dfd = (int *)&PT_REGS_PARM1(regs);
+// 	const char __user **filename_user = (const char **)&PT_REGS_PARM2(regs);
+// #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+// // static int vfs_statx(int dfd, const char __user *filename, int flags, struct kstat *stat, u32 request_mask)
+// 	int *flags = (int *)&PT_REGS_PARM3(regs);
+// #else
+// // int vfs_fstatat(int dfd, const char __user *filename, struct kstat *stat,int flag)
+// 	int *flags = (int *)&PT_REGS_CCALL_PARM4(regs);
+// #endif
 
-	return ksu_handle_stat(dfd, filename_user, flags);
-}
+// 	return ksu_handle_stat(dfd, filename_user, flags);
+// }
 
-// https://elixir.bootlin.com/linux/v5.10.158/source/fs/exec.c#L1864
-static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
-{
-	int *fd = (int *)&PT_REGS_PARM1(regs);
-	struct filename **filename_ptr =
-		(struct filename **)&PT_REGS_PARM2(regs);
+// // https://elixir.bootlin.com/linux/v5.10.158/source/fs/exec.c#L1864
+// static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
+// {
+// 	int *fd = (int *)&PT_REGS_PARM1(regs);
+// 	struct filename **filename_ptr =
+// 		(struct filename **)&PT_REGS_PARM2(regs);
 
-	return ksu_handle_execveat_sucompat(fd, filename_ptr, NULL, NULL, NULL);
-}
+// 	return ksu_handle_execveat_sucompat(fd, filename_ptr, NULL, NULL, NULL);
+// }
 
-static struct kprobe faccessat_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
-	.symbol_name = "do_faccessat",
-#else
-	.symbol_name = "sys_faccessat",
-#endif
-	.pre_handler = faccessat_handler_pre,
-};
+// static struct kprobe faccessat_kp = {
+// #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+// 	.symbol_name = "do_faccessat",
+// #else
+// 	.symbol_name = "sys_faccessat",
+// #endif
+// 	.pre_handler = faccessat_handler_pre,
+// };
 
-static struct kprobe newfstatat_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-	.symbol_name = "vfs_statx",
-#else
-	.symbol_name = "vfs_fstatat",
-#endif
-	.pre_handler = newfstatat_handler_pre,
-};
+// static struct kprobe newfstatat_kp = {
+// #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+// 	.symbol_name = "vfs_statx",
+// #else
+// 	.symbol_name = "vfs_fstatat",
+// #endif
+// 	.pre_handler = newfstatat_handler_pre,
+// };
 
-static struct kprobe execve_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	.symbol_name = "do_execveat_common",
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
-	.symbol_name = "__do_execve_file",
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
-	.symbol_name = "do_execveat_common",
-#endif
-	.pre_handler = execve_handler_pre,
-};
+// static struct kprobe execve_kp = {
+// #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+// 	.symbol_name = "do_execveat_common",
+// #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
+// 	.symbol_name = "__do_execve_file",
+// #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+// 	.symbol_name = "do_execveat_common",
+// #endif
+// 	.pre_handler = execve_handler_pre,
+// };
 
-#endif
+// #endif
 
 // sucompat: permited process can execute 'su' to gain root access.
 void ksu_enable_sucompat()
 {
-#ifdef CONFIG_KPROBES
-	int ret;
-	ret = register_kprobe(&execve_kp);
-	pr_info("sucompat: execve_kp: %d\n", ret);
-	ret = register_kprobe(&newfstatat_kp);
-	pr_info("sucompat: newfstatat_kp: %d\n", ret);
-	ret = register_kprobe(&faccessat_kp);
-	pr_info("sucompat: faccessat_kp: %d\n", ret);
-#endif
+// #ifdef CONFIG_KPROBES
+// 	int ret;
+// 	ret = register_kprobe(&execve_kp);
+// 	pr_info("sucompat: execve_kp: %d\n", ret);
+// 	ret = register_kprobe(&newfstatat_kp);
+// 	pr_info("sucompat: newfstatat_kp: %d\n", ret);
+// 	ret = register_kprobe(&faccessat_kp);
+// 	pr_info("sucompat: faccessat_kp: %d\n", ret);
+// #endif
 }

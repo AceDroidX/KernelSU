@@ -2,16 +2,10 @@ name: Build Android GKI Image
 on:
   workflow_call:
   workflow_dispatch:
-    inputs:
-      debug:
-        description: 'Build debug kernel'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   build-a16-kernel:
     uses: ./.github/workflows/build-kernel-a16.yml
     secrets: inherit
     with:
-      debug: ${{ github.event.inputs.debug || false }}
+      debug: false

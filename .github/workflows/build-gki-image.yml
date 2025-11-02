@@ -10,23 +10,8 @@ on:
         default: false
 
 jobs:
-  build-a12-kernel:
-    uses: ./.github/workflows/build-kernel-a12.yml
-    secrets: inherit
-    with:
-      debug: ${{ github.event.inputs.debug || false }}
-  build-a13-kernel:
-    uses: ./.github/workflows/build-kernel-a13.yml
-    secrets: inherit
-    with:
-      debug: ${{ github.event.inputs.debug || false }}
-  build-a14-kernel:
-    uses: ./.github/workflows/build-kernel-a14.yml
-    secrets: inherit
-    with:
-      debug: ${{ github.event.inputs.debug || false }}
-  build-a15-kernel:
-    uses: ./.github/workflows/build-kernel-a15.yml
+  build-a16-kernel:
+    uses: ./.github/workflows/build-kernel-a16.yml
     secrets: inherit
     with:
       debug: ${{ github.event.inputs.debug || false }}
